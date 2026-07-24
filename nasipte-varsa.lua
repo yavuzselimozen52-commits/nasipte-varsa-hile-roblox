@@ -1,11 +1,12 @@
 -- ==========================================================
---    NASİPTE VARSA BETA v1.6 (MİNİGUN & CIVIL CIVIL PARILTI)
+--    NASİPTE VARSA BETA v1.7 (Kamera Fixli Minigun Uçuş)
 -- ==========================================================
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local TeleportService = game:GetService("TeleportService")
+local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
@@ -14,7 +15,8 @@ local Config = {
     RoketActive = false,
     ToolFlyActive = false,
     ToolInstance = nil,
-    FlyConnection = nil
+    FlyConnection = nil,
+    OriginalCameraMode = Enum.MouseBehavior.Default
 }
 
 local function getRGB()
@@ -47,7 +49,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "nasipte varsa beta v1.6"
+Title.Text = "nasipte varsa beta v1.7"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
@@ -141,26 +143,25 @@ createFeature("Endermen", "mc den geldik :P", 165, function(state)
     end
 end)
 
--- 4. MİNİGUN & CIVIL CIVIL UÇUŞ TOOL ÖZELLİĞİ
-createFeature("Minigun & Cıvıl Uçuş", "eline minigun al, parıl parıl süzül", 225, function(state)
+-- 4. MİNİGUN & CIVIL CIVIL UÇUŞ & KAMERA FİX TOOL ÖZELLİĞİ
+createFeature("Minigun Uçuş (Kamera Fix)", "eline minigun al, parıl parıl süzül, kamera düzeldi", 225, function(state)
     Config.ToolFlyActive = state
     if state then
         local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
         local character = LocalPlayer.Character
         if backpack and character then
             local tool = Instance.new("Tool")
-            tool.Name = "NasipteMinigun"
+            tool.Name = "NasipteMinigunKameraFix"
             tool.RequiresHandle = false
             Config.ToolInstance = tool
             
             local handle = Instance.new("Part")
             handle.Name = "Handle"
-            handle.Size = Vector3.new(1.2, 1.2, 4) -- Devasa minigun gövdesi boyutu
+            handle.Size = Vector3.new(1.2, 1.2, 4) -- Devasa minigun gövdesi
             handle.Color = Color3.fromRGB(35, 35, 35)
             handle.Material = Enum.Material.Metal
             handle.Parent = tool
             
-            -- Minigun namlu detayları için ek parça
             local barrel = Instance.new("Part")
             barrel.Name = "Barrel"
             barrel.Size = Vector3.new(0.8, 0.8, 4.5)
@@ -169,7 +170,6 @@ createFeature("Minigun & Cıvıl Uçuş", "eline minigun al, parıl parıl süz�
             barrel.Material = Enum.Material.Neon
             barrel.Parent = tool
             
-            -- Cıvıl cıvıl parıltı efekti (ParticleEmitter)
             local particle = Instance.new("ParticleEmitter")
             particle.Name = "CivilPartikül"
             particle.Color = ColorSequence.new(Color3.fromRGB(0, 255, 255), Color3.fromRGB(255, 0, 255))
@@ -180,7 +180,9 @@ createFeature("Minigun & Cıvıl Uçuş", "eline minigun al, parıl parıl süz�
             particle.Parent = handle
 
             local bodyVelocity, bodyGyro
-            
+            local originalCameraOffset = LocalPlayer.CameraOffset
+            local cameraSubject = Camera.Subject
+
             tool.Equipped:Connect(function()
                 local hrp = character:FindFirstChild("HumanoidRootPart")
                 local torso = character:FindFirstChild("Torso")
@@ -195,28 +197,32 @@ createFeature("Minigun & Cıvıl Uçuş", "eline minigun al, parıl parıl süz�
                     bodyGyro.CFrame = hrp.CFrame
                     bodyGyro.Parent = hrp
 
+                    -- Kamera Fix: Kameranın karaktere girmemesi için CameraOffset ayarla
+                    LocalPlayer.CameraOffset = Vector3.new(0, 0, 6) -- Kamerayı 6 stud arkaya al
+                    
                     Config.FlyConnection = RunService.RenderStepped:Connect(function()
                         local camCF = Camera.CFrame
                         bodyGyro.CFrame = camCF
                         
                         local speed = 22
                         local moveDir = Vector3.new(0,0,0)
-                        local uis = game:GetService("UserInputService")
                         
-                        if uis:IsKeyDown(Enum.KeyCode.W) then
+                        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
                             moveDir = moveDir + camCF.LookVector
                         end
-                        if uis:IsKeyDown(Enum.KeyCode.S) then
+                        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
                             moveDir = moveDir - camCF.LookVector
                         end
-                        if uis:IsKeyDown(Enum.KeyCode.A) then
+                        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
                             moveDir = moveDir - camCF.RightVector
                         end
-                        if uis:IsKeyDown(Enum.KeyCode.D) then
+                        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
                             moveDir = moveDir + camCF.RightVector
                         end
                         
                         bodyVelocity.Velocity = moveDir * speed
+                        
+                        -- Torso yatay pozisyonda
                         torso.CFrame = camCF * CFrame.Angles(math.rad(90), 0, 0)
                     end)
                 end
@@ -229,6 +235,9 @@ createFeature("Minigun & Cıvıl Uçuş", "eline minigun al, parıl parıl süz�
                 end
                 if bodyVelocity then bodyVelocity:Destroy() end
                 if bodyGyro then bodyGyro:Destroy() end
+                -- Kamera ayarlarını geri yükle
+                LocalPlayer.CameraOffset = originalCameraOffset
+                Camera.Subject = cameraSubject
             end)
 
             tool.Parent = backpack
@@ -249,6 +258,7 @@ createFeature("Minigun & Cıvıl Uçuş", "eline minigun al, parıl parıl süz�
                 end
             end
         end
+        LocalPlayer.CameraOffset = Vector3.new(0, 0, 0)
     end
 end)
 
@@ -312,6 +322,7 @@ UnloadBtn.MouseButton1Click:Connect(function()
             if hl then hl:Destroy() end
         end
     end
+    LocalPlayer.CameraOffset = Vector3.new(0, 0, 0)
     ScreenGui:Destroy()
 end)
 
@@ -319,7 +330,7 @@ local Info = Instance.new("TextLabel")
 Info.Size = UDim2.new(1, 0, 0, 30)
 Info.Position = UDim2.new(0, 0, 1, -35)
 Info.BackgroundTransparency = 1
-Info.Text = "nasipte varsa beta v1.6 - Sürüklenebilir"
+Info.Text = "nasipte varsa beta v1.7 - Sürüklenebilir"
 Info.TextColor3 = Color3.fromRGB(90, 90, 90)
 Info.TextSize = 10
 Info.Font = Enum.Font.Gotham
@@ -329,49 +340,4 @@ Info.Parent = MainFrame
 RunService.RenderStepped:Connect(function()
     -- ESP Loop
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character then
-            local char = plr.Character
-            local hum = char:FindFirstChild("Humanoid")
-            if Config.ESP and hum and hum.Health > 0 then
-                local hl = char:FindFirstChild("NasipHighlight")
-                if not hl then
-                    hl = Instance.new("Highlight")
-                    hl.Name = "NasipHighlight"
-                    hl.Adornee = char
-                    hl.FillTransparency = 0.5
-                    hl.OutlineTransparency = 0
-                    hl.Parent = char
-                end
-                local rgb = getRGB()
-                hl.FillColor = rgb
-                hl.OutlineColor = rgb
-            else
-                local hl = char:FindFirstChild("NasipHighlight")
-                if hl then hl:Destroy() end
-            end
-        end
-    end
-
-    -- Fling (Roket) Loop
-    if Config.RoketActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local myRoot = LocalPlayer.Character.HumanoidRootPart
-        local closestPlr = nil
-        local shortestDist = math.huge
-        
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (myRoot.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-                if dist < shortestDist then
-                    shortestDist = dist
-                    closestPlr = plr
-                end
-            end
-        end
-        
-        if closestPlr and closestPlr.Character:FindFirstChild("HumanoidRootPart") then
-            local tRoot = closestPlr.Character.HumanoidRootPart
-            tRoot.AssemblyLinearVelocity = Vector3.new(0, 500, 0)
-            tRoot.AssemblyAngularVelocity = Vector3.new(500, 500, 500)
-        end
-    end
-end)
+        if plr ~=

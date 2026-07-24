@@ -1,5 +1,5 @@
 -- ==========================================================
---    NASİPTE VARSA BETA V1.2 (ANİMASYONLU & HAVALI SÜRÜM)
+--    NASİPTE VARSA BETA v1.4 (R6 İNVİNCİBLE YATAY UÇUŞ)
 -- ==========================================================
 
 local Players = game:GetService("Players")
@@ -12,8 +12,9 @@ local LocalPlayer = Players.LocalPlayer
 local Config = {
     ESP = false,
     RoketActive = false,
-    EndermenActive = false,
-    ActiveAnimationTrack = nil
+    ToolFlyActive = false,
+    ToolInstance = nil,
+    FlyConnection = nil
 }
 
 local function getRGB()
@@ -46,7 +47,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "nasipte varsa beta v1.2"
+Title.Text = "nasipte varsa beta v1.4"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
@@ -140,26 +141,91 @@ createFeature("Endermen", "mc den geldik :P", 165, function(state)
     end
 end)
 
--- 4. ANİMASYONLU ÖZELLİK: Havalı Hareketler / Şekil Başladı
-createFeature("Şekil Önemli", "havalı animasyonla ortamlardayız", 225, function(state)
-    local character = LocalPlayer.Character
-    if not character then return end
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return end
-
+-- 4. R6 Invincible Yatay Uçuş Tool Özelliği
+createFeature("R6 Invincible Uçuş", "eline eşyayı al, kolları uzatıp yatay uç", 225, function(state)
+    Config.ToolFlyActive = state
     if state then
-        pcall(function()
-            local anim = Instance.new("Animation")
-            -- Örnek havalı dans/aksiyon animasyon ID'si (R15 uyumlu havalı duruş)
-            anim.AnimationId = "rbxassetid://33380097" 
-            Config.ActiveAnimationTrack = humanoid:LoadAnimation(anim)
-            Config.ActiveAnimationTrack.Looped = true
-            Config.ActiveAnimationTrack:Play()
-        end)
+        local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+        local character = LocalPlayer.Character
+        if backpack and character then
+            local tool = Instance.new("Tool")
+            tool.Name = "NasipteInvincible"
+            tool.RequiresHandle = false
+            Config.ToolInstance = tool
+            
+            local bodyVelocity, bodyGyro
+            
+            tool.Equipped:Connect(function()
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                local torso = character:FindFirstChild("Torso")
+                if hrp and torso then
+                    bodyVelocity = Instance.new("BodyVelocity")
+                    bodyVelocity.MaxForce = Vector3.new(400000, 400000, 400000)
+                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                    bodyVelocity.Parent = hrp
+
+                    bodyGyro = Instance.new("BodyGyro")
+                    bodyGyro.MaxTorque = Vector3.new(400000, 400000, 400000)
+                    bodyGyro.CFrame = hrp.CFrame
+                    bodyGyro.Parent = hrp
+
+                    -- R6 için yatay duruş ve kamera yönüne göre uçuş döngüsü
+                    Config.FlyConnection = RunService.RenderStepped:Connect(function()
+                        local camCF = Camera.CFrame
+                        bodyGyro.CFrame = camCF
+                        
+                        -- Kameranın baktığı yöne doğru hız vektörü
+                        local speed = 50
+                        local moveDir = Vector3.new(0,0,0)
+                        local uis = game:GetService("UserInputService")
+                        
+                        if uis:IsKeyDown(Enum.KeyCode.W) then
+                            moveDir = moveDir + camCF.LookVector
+                        end
+                        if uis:IsKeyDown(Enum.KeyCode.S) then
+                            moveDir = moveDir - camCF.LookVector
+                        end
+                        if uis:IsKeyDown(Enum.KeyCode.A) then
+                            moveDir = moveDir - camCF.RightVector
+                        end
+                        if uis:IsKeyDown(Enum.KeyCode.D) then
+                            moveDir = moveDir + camCF.RightVector
+                        end
+                        
+                        bodyVelocity.Velocity = moveDir * speed
+                        
+                        -- Invincible gibi yatay yatırma efekti (R6 Torso açısını öne eğme)
+                        torso.CFrame = camCF * CFrame.Angles(math.rad(90), 0, 0)
+                    end)
+                end
+            end)
+
+            tool.Unequipped:Connect(function()
+                if Config.FlyConnection then
+                    Config.FlyConnection:Disconnect()
+                    Config.FlyConnection = nil
+                end
+                if bodyVelocity then bodyVelocity:Destroy() end
+                if bodyGyro then bodyGyro:Destroy() end
+            end)
+
+            tool.Parent = backpack
+        end
     else
-        if Config.ActiveAnimationTrack then
-            Config.ActiveAnimationTrack:Stop()
-            Config.ActiveAnimationTrack = nil
+        if Config.ToolInstance then
+            Config.ToolInstance:Destroy()
+            Config.ToolInstance = nil
+        end
+        if Config.FlyConnection then
+            Config.FlyConnection:Disconnect()
+            Config.FlyConnection = nil
+        end
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            for _, v in ipairs(LocalPlayer.Character.HumanoidRootPart:GetChildren()) do
+                if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then
+                    v:Destroy()
+                end
+            end
         end
     end
 end)
@@ -216,9 +282,8 @@ UnloadCorner.CornerRadius = UDim.new(0, 6)
 UnloadCorner.Parent = UnloadBtn
 
 UnloadBtn.MouseButton1Click:Connect(function()
-    if Config.ActiveAnimationTrack then
-        Config.ActiveAnimationTrack:Stop()
-    end
+    if Config.ToolInstance then Config.ToolInstance:Destroy() end
+    if Config.FlyConnection then Config.FlyConnection:Disconnect() end
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr.Character then
             local hl = plr.Character:FindFirstChild("NasipHighlight")
@@ -232,7 +297,7 @@ local Info = Instance.new("TextLabel")
 Info.Size = UDim2.new(1, 0, 0, 30)
 Info.Position = UDim2.new(0, 0, 1, -35)
 Info.BackgroundTransparency = 1
-Info.Text = "nasipte varsa beta v1.2 - Sürüklenebilir"
+Info.Text = "nasipte varsa beta v1.4 - Sürüklenebilir"
 Info.TextColor3 = Color3.fromRGB(90, 90, 90)
 Info.TextSize = 10
 Info.Font = Enum.Font.Gotham

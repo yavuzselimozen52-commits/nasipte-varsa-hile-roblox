@@ -1,5 +1,5 @@
 -- ==========================================================
---    NASİPTE VARSA BETA v1.5 (YUMUŞAK & KONTROLLÜ UÇUŞ)
+--    NASİPTE VARSA BETA v1.6 (MİNİGUN & CIVIL CIVIL PARILTI)
 -- ==========================================================
 
 local Players = game:GetService("Players")
@@ -47,7 +47,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "nasipte varsa beta v1.5"
+Title.Text = "nasipte varsa beta v1.6"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
@@ -141,18 +141,44 @@ createFeature("Endermen", "mc den geldik :P", 165, function(state)
     end
 end)
 
--- 4. R6 Yumuşak ve Kontrollü Yatay Uçuş Tool Özelliği
-createFeature("R6 Yumuşak Uçuş", "eline eşyayı al, yavaşça ve net süzül", 225, function(state)
+-- 4. MİNİGUN & CIVIL CIVIL UÇUŞ TOOL ÖZELLİĞİ
+createFeature("Minigun & Cıvıl Uçuş", "eline minigun al, parıl parıl süzül", 225, function(state)
     Config.ToolFlyActive = state
     if state then
         local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
         local character = LocalPlayer.Character
         if backpack and character then
             local tool = Instance.new("Tool")
-            tool.Name = "NasipteYavasUcus"
+            tool.Name = "NasipteMinigun"
             tool.RequiresHandle = false
             Config.ToolInstance = tool
             
+            local handle = Instance.new("Part")
+            handle.Name = "Handle"
+            handle.Size = Vector3.new(1.2, 1.2, 4) -- Devasa minigun gövdesi boyutu
+            handle.Color = Color3.fromRGB(35, 35, 35)
+            handle.Material = Enum.Material.Metal
+            handle.Parent = tool
+            
+            -- Minigun namlu detayları için ek parça
+            local barrel = Instance.new("Part")
+            barrel.Name = "Barrel"
+            barrel.Size = Vector3.new(0.8, 0.8, 4.5)
+            barrel.Position = handle.Position + Vector3.new(0, 0, -2)
+            barrel.Color = Color3.fromRGB(200, 50, 50)
+            barrel.Material = Enum.Material.Neon
+            barrel.Parent = tool
+            
+            -- Cıvıl cıvıl parıltı efekti (ParticleEmitter)
+            local particle = Instance.new("ParticleEmitter")
+            particle.Name = "CivilPartikül"
+            particle.Color = ColorSequence.new(Color3.fromRGB(0, 255, 255), Color3.fromRGB(255, 0, 255))
+            particle.Size = NumberSequence.new(0.8, 0.2)
+            particle.Texture = "rbxassetid://258129463"
+            particle.Rate = 50
+            particle.Speed = NumberRange.new(5, 10)
+            particle.Parent = handle
+
             local bodyVelocity, bodyGyro
             
             tool.Equipped:Connect(function()
@@ -171,10 +197,8 @@ createFeature("R6 Yumuşak Uçuş", "eline eşyayı al, yavaşça ve net süzül
 
                     Config.FlyConnection = RunService.RenderStepped:Connect(function()
                         local camCF = Camera.CFrame
-                        -- Kamerayı sabitlemek yerine sadece hafifçe yönlendiriyoruz, görüş bozulmuyor
                         bodyGyro.CFrame = camCF
                         
-                        -- Hızı 50'den 22'ye düşürdük, artık sakin sakin süzüleceksin
                         local speed = 22
                         local moveDir = Vector3.new(0,0,0)
                         local uis = game:GetService("UserInputService")
@@ -193,8 +217,6 @@ createFeature("R6 Yumuşak Uçuş", "eline eşyayı al, yavaşça ve net süzül
                         end
                         
                         bodyVelocity.Velocity = moveDir * speed
-                        
-                        -- Torso yatay pozisyonda ama kamerayı bozmayacak şekilde ayarlandı
                         torso.CFrame = camCF * CFrame.Angles(math.rad(90), 0, 0)
                     end)
                 end
@@ -297,7 +319,7 @@ local Info = Instance.new("TextLabel")
 Info.Size = UDim2.new(1, 0, 0, 30)
 Info.Position = UDim2.new(0, 0, 1, -35)
 Info.BackgroundTransparency = 1
-Info.Text = "nasipte varsa beta v1.5 - Sürüklenebilir"
+Info.Text = "nasipte varsa beta v1.6 - Sürüklenebilir"
 Info.TextColor3 = Color3.fromRGB(90, 90, 90)
 Info.TextSize = 10
 Info.Font = Enum.Font.Gotham

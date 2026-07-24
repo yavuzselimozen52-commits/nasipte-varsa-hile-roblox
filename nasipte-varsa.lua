@@ -1,24 +1,21 @@
 -- ==========================================================
---    NASİPTE VARSA BETA v2.0 (KABA KUVVET KAMERA FİX)
+--    NASİPTE VARSA HİLE - ROBLOX (PLAYERGUI FİXLİ)
 -- ==========================================================
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
 local TeleportService = game:GetService("TeleportService")
 local UserInputService = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 local Config = {
     ESP = false,
     RoketActive = false,
     ToolFlyActive = false,
     ToolInstance = nil,
-    FlyConnection = nil,
-    OldMin = 0,
-    OldMax = 0
+    FlyConnection = nil
 }
 
 local function getRGB()
@@ -26,14 +23,14 @@ local function getRGB()
     return Color3.fromHSV(t % 1, 1, 1)
 end
 
-if CoreGui:FindFirstChild("NasipBetaGui") then
-    CoreGui.NasipBetaGui:Destroy()
+if PlayerGui:FindFirstChild("NasipBetaGui") then
+    PlayerGui.NasipBetaGui:Destroy()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "NasipBetaGui"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = CoreGui
+ScreenGui.Parent = PlayerGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 320, 0, 540)
@@ -51,7 +48,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "nasipte varsa beta v2.0"
+Title.Text = "nasipte varsa v2.1"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
@@ -145,15 +142,15 @@ createFeature("Endermen", "mc den geldik :P", 165, function(state)
     end
 end)
 
--- 4. KAMERA FİXLİ MİNİGUN UÇUŞ (KABA KUVVET)
-createFeature("Minigun Uçuş (Kaba Kuvvet Kamera Fix)", "eline minigun al, artık torsonun içini görmicen", 225, function(state)
+-- 4. MİNİGUN UÇUŞ (KABAKUVVET KAMERA FİX)
+createFeature("Minigun Uçuş (Kamera Fix)", "eline minigun al, torsonun içi görünmez", 225, function(state)
     Config.ToolFlyActive = state
     if state then
         local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
         local character = LocalPlayer.Character
         if backpack and character then
             local tool = Instance.new("Tool")
-            tool.Name = "NasipteKabaKuvvet"
+            tool.Name = "NasipteMinigun"
             tool.RequiresHandle = false
             Config.ToolInstance = tool
             
@@ -182,10 +179,8 @@ createFeature("Minigun Uçuş (Kaba Kuvvet Kamera Fix)", "eline minigun al, art�
             particle.Parent = handle
 
             local bodyVelocity, bodyGyro
-            
-            -- Kamera Ayarlarını Koru
-            local originalMin = Player.CameraMinZoomDistance
-            local originalMax = Player.CameraMaxZoomDistance
+            local originalMin = LocalPlayer.CameraMinZoomDistance
+            local originalMax = LocalPlayer.CameraMaxZoomDistance
 
             tool.Equipped:Connect(function()
                 local hrp = character:FindFirstChild("HumanoidRootPart")
@@ -201,10 +196,8 @@ createFeature("Minigun Uçuş (Kaba Kuvvet Kamera Fix)", "eline minigun al, art�
                     bodyGyro.CFrame = hrp.CFrame
                     bodyGyro.Parent = hrp
 
-                    -- KABA KUVVET KAMERA KONTROLÜ: Zoom mesafesini sabitle
-                    Player.CameraMinZoomDistance = 10
-                    Player.CameraMaxZoomDistance = 10
-                    Camera.CameraType = Enum.CameraType.Custom -- Hala Custom kalsın ama biz zorluyoruz
+                    LocalPlayer.CameraMinZoomDistance = 12
+                    LocalPlayer.CameraMaxZoomDistance = 12
 
                     Config.FlyConnection = RunService.RenderStepped:Connect(function()
                         local camCF = Camera.CFrame
@@ -226,8 +219,6 @@ createFeature("Minigun Uçuş (Kaba Kuvvet Kamera Fix)", "eline minigun al, art�
                         
                         bodyVelocity.Velocity = moveDir * speed
                         bodyGyro.CFrame = camCF
-                        
-                        -- Torso yatay pozisyonda
                         torso.CFrame = camCF * CFrame.Angles(math.rad(90), 0, 0)
                     end)
                 end
@@ -240,9 +231,8 @@ createFeature("Minigun Uçuş (Kaba Kuvvet Kamera Fix)", "eline minigun al, art�
                 end
                 if bodyVelocity then bodyVelocity:Destroy() end
                 if bodyGyro then bodyGyro:Destroy() end
-                -- Kamera ayarlarını geri yükle
-                Player.CameraMinZoomDistance = originalMin
-                Player.CameraMaxZoomDistance = originalMax
+                LocalPlayer.CameraMinZoomDistance = originalMin
+                LocalPlayer.CameraMaxZoomDistance = originalMax
             end)
 
             tool.Parent = backpack
@@ -263,9 +253,8 @@ createFeature("Minigun Uçuş (Kaba Kuvvet Kamera Fix)", "eline minigun al, art�
                 end
             end
         end
-        -- Unload edildiğinde de ayarları geri yükle
-        if originalMin then Player.CameraMinZoomDistance = originalMin end
-        if originalMax then Player.CameraMaxZoomDistance = originalMax end
+        LocalPlayer.CameraMinZoomDistance = 0.5
+        LocalPlayer.CameraMaxZoomDistance = 400
     end
 end)
 
@@ -329,7 +318,68 @@ UnloadBtn.MouseButton1Click:Connect(function()
             if hl then hl:Destroy() end
         end
     end
-    -- Unload'da da kamera ayarlarını geri yükle (kodun altındaki Player değişkeni local'de hata verirse diye tekrar alıyoruz)
-    local player = game.Players.LocalPlayer
-    if player and Config.OldMin ~= 0 then player.CameraMinZoomDistance = Config.OldMin end
-    if player and Config.Old
+    LocalPlayer.CameraMinZoomDistance = 0.5
+    LocalPlayer.CameraMaxZoomDistance = 400
+    ScreenGui:Destroy()
+end)
+
+local Info = Instance.new("TextLabel")
+Info.Size = UDim2.new(1, 0, 0, 30)
+Info.Position = UDim2.new(0, 0, 1, -35)
+Info.BackgroundTransparency = 1
+Info.Text = "nasipte varsa v2.1 - Sürüklenebilir"
+Info.TextColor3 = Color3.fromRGB(90, 90, 90)
+Info.TextSize = 10
+Info.Font = Enum.Font.Gotham
+Info.Parent = MainFrame
+
+-- ARKA PLAN DÖNGÜLERİ
+RunService.RenderStepped:Connect(function()
+    -- ESP Loop
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            local char = plr.Character
+            local hum = char:FindFirstChild("Humanoid")
+            if Config.ESP and hum and hum.Health > 0 then
+                local hl = char:FindFirstChild("NasipHighlight")
+                if not hl then
+                    hl = Instance.new("Highlight")
+                    hl.Name = "NasipHighlight"
+                    hl.Adornee = char
+                    hl.FillTransparency = 0.5
+                    hl.OutlineTransparency = 0
+                    hl.Parent = char
+                end
+                local rgb = getRGB()
+                hl.FillColor = rgb
+                hl.OutlineColor = rgb
+            else
+                local hl = char:FindFirstChild("NasipHighlight")
+                if hl then hl:Destroy() end
+            end
+        end
+    end
+
+    -- Fling (Roket) Loop
+    if Config.RoketActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local myRoot = LocalPlayer.Character.HumanoidRootPart
+        local closestPlr = nil
+        local shortestDist = math.huge
+        
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (myRoot.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    closestPlr = plr
+                end
+            end
+        end
+        
+        if closestPlr and closestPlr.Character:FindFirstChild("HumanoidRootPart") then
+            local tRoot = closestPlr.Character.HumanoidRootPart
+            tRoot.AssemblyLinearVelocity = Vector3.new(0, 500, 0)
+            tRoot.AssemblyAngularVelocity = Vector3.new(500, 500, 500)
+        end
+    end
+end)

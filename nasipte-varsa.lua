@@ -1,5 +1,5 @@
 -- ==========================================================
---    NASİPTE VARSA BETA V1 (GÜNCELLENDİ / FIXLENDİ)
+--    NASİPTE VARSA BETA V1.1 (HAVALI İNTİKAM GÜNCELLEMESİ)
 -- ==========================================================
 
 local Players = game:GetService("Players")
@@ -12,7 +12,8 @@ local LocalPlayer = Players.LocalPlayer
 local Config = {
     ESP = false,
     RoketActive = false,
-    EndermenActive = false
+    EndermenActive = false,
+    HavaliTarz = false
 }
 
 local function getRGB()
@@ -30,8 +31,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 320, 0, 480) -- Boyutu yeni buton için biraz uzttık
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -240)
+MainFrame.Size = UDim2.new(0, 320, 0, 540) -- Yeni özellik için biraz daha uzttık
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -270)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -45,7 +46,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "nasipte varsa beta v1"
+Title.Text = "nasipte varsa beta v1.1"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
@@ -104,7 +105,7 @@ local function createFeature(titleText, descText, yPos, callback)
     end)
 end
 
--- 1. Duvardan Bakıyoz Aga (ESP Fix)
+-- 1. Duvardan Bakıyoz Aga (ESP)
 createFeature("Duvardan Bakıyoz Aga", "Duvardan görüyoz pusu kuruyoz", 45, function(state)
     Config.ESP = state
     if not state then
@@ -117,7 +118,7 @@ createFeature("Duvardan Bakıyoz Aga", "Duvardan görüyoz pusu kuruyoz", 45, fu
     end
 end)
 
--- 2. Roket (Fling Fix - En yakın oyuncuya uçurur)
+-- 2. Roket (Fling)
 createFeature("Roket", "vizesiz tatil daa ne istiyon kral", 105, function(state)
     Config.RoketActive = state
 end)
@@ -139,10 +140,25 @@ createFeature("Endermen", "mc den geldik :P", 165, function(state)
     end
 end)
 
--- 4. YENİ ÖZELLİK: REJOIN (bak hemen burdayım)
+-- 4. YENİ ÖZELLİK: Şekilli Şukullu / Havalı Tarz (Özel Animasyon Havası)
+createFeature("Şekil Önemli", "havalı takılıyoruz intikam vakti", 225, function(state)
+    Config.HavaliTarz = state
+    if state and LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- Örnek havalı bir Roblox animasyon ID'si (Örn: Havalı duruş/dans paketi öğesi)
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://507771019" -- Klasik havalı idle/taslak animasyon
+            local track = humanoid:LoadAnimation(anim)
+            track:Play()
+        end
+    end
+end)
+
+-- REJOIN BUTONU (bak hemen burdayım)
 local RejoinContainer = Instance.new("Frame")
 RejoinContainer.Size = UDim2.new(0, 280, 0, 50)
-RejoinContainer.Position = UDim2.new(0.5, -140, 0, 225)
+RejoinContainer.Position = UDim2.new(0.5, -140, 0, 285)
 RejoinContainer.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
 RejoinContainer.BorderSizePixel = 0
 RejoinContainer.Parent = MainFrame
@@ -178,7 +194,7 @@ end)
 -- UNLOAD BUTONU
 local UnloadBtn = Instance.new("TextButton")
 UnloadBtn.Size = UDim2.new(0, 280, 0, 35)
-UnloadBtn.Position = UDim2.new(0.5, -140, 0, 290)
+UnloadBtn.Position = UDim2.new(0.5, -140, 0, 350)
 UnloadBtn.BackgroundColor3 = Color3.fromRGB(80, 20, 20)
 UnloadBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
 UnloadBtn.TextSize = 13
@@ -204,13 +220,13 @@ local Info = Instance.new("TextLabel")
 Info.Size = UDim2.new(1, 0, 0, 30)
 Info.Position = UDim2.new(0, 0, 1, -35)
 Info.BackgroundTransparency = 1
-Info.Text = "nasipte varsa beta v1 - Sürüklenebilir"
+Info.Text = "nasipte varsa beta v1.1 - Sürüklenebilir"
 Info.TextColor3 = Color3.fromRGB(90, 90, 90)
 Info.TextSize = 10
 Info.Font = Enum.Font.Gotham
 Info.Parent = MainFrame
 
--- ARKA PLAN DÖNGÜLERİ (ESP ve Fling Mekanikleri)
+-- ARKA PLAN DÖNGÜLERİ
 RunService.RenderStepped:Connect(function()
     -- ESP Loop
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -237,7 +253,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- Fling (Roket) Loop: Aktifken en yakındaki oyuncunun üstüne gidip yüksek hız uygular
+    -- Fling (Roket) Loop
     if Config.RoketActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local myRoot = LocalPlayer.Character.HumanoidRootPart
         local closestPlr = nil
@@ -255,7 +271,6 @@ RunService.RenderStepped:Connect(function()
         
         if closestPlr and closestPlr.Character:FindFirstChild("HumanoidRootPart") then
             local tRoot = closestPlr.Character.HumanoidRootPart
-            -- Adamı vizesiz tatile yollamak için fizik motorunu tetikliyoruz
             tRoot.AssemblyLinearVelocity = Vector3.new(0, 500, 0)
             tRoot.AssemblyAngularVelocity = Vector3.new(500, 500, 500)
         end

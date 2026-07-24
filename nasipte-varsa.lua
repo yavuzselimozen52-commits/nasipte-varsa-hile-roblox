@@ -1,16 +1,17 @@
 -- ==========================================================
---         NASİPTE VARSA BETA V1 (ÖZEL YAPIM)
+--    NASİPTE VARSA BETA V1 (GÜNCELLENDİ / FIXLENDİ)
 -- ==========================================================
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
+local TeleportService = game:GetService("TeleportService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
 local Config = {
     ESP = false,
-    RoketTarget = nil,
+    RoketActive = false,
     EndermenActive = false
 }
 
@@ -29,8 +30,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 320, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+MainFrame.Size = UDim2.new(0, 320, 0, 480) -- Boyutu yeni buton için biraz uzttık
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -240)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -42,7 +43,7 @@ UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = MainFrame
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 45)
+Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
 Title.Text = "nasipte varsa beta v1"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -59,7 +60,7 @@ end)
 
 local function createFeature(titleText, descText, yPos, callback)
     local Container = Instance.new("Frame")
-    Container.Size = UDim2.new(0, 280, 0, 60)
+    Container.Size = UDim2.new(0, 280, 0, 55)
     Container.Position = UDim2.new(0.5, -140, 0, yPos)
     Container.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
     Container.BorderSizePixel = 0
@@ -70,7 +71,7 @@ local function createFeature(titleText, descText, yPos, callback)
     Corner.Parent = Container
 
     local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(1, -10, 0, 30)
+    Btn.Size = UDim2.new(1, -10, 0, 26)
     Btn.Position = UDim2.new(0, 5, 0, 4)
     Btn.BackgroundTransparency = 1
     Btn.TextColor3 = Color3.fromRGB(180, 180, 180)
@@ -80,8 +81,8 @@ local function createFeature(titleText, descText, yPos, callback)
     Btn.Parent = Container
 
     local Desc = Instance.new("TextLabel")
-    Desc.Size = UDim2.new(1, -10, 0, 20)
-    Desc.Position = UDim2.new(0, 5, 0, 34)
+    Desc.Size = UDim2.new(1, -10, 0, 18)
+    Desc.Position = UDim2.new(0, 5, 0, 31)
     Desc.BackgroundTransparency = 1
     Desc.TextColor3 = Color3.fromRGB(110, 110, 110)
     Desc.TextSize = 11
@@ -103,28 +104,26 @@ local function createFeature(titleText, descText, yPos, callback)
     end)
 end
 
-createFeature("Duvardan Bakıyoz Aga", "Duvardan görüyoz pusu kuruyoz", 55, function(state)
+-- 1. Duvardan Bakıyoz Aga (ESP Fix)
+createFeature("Duvardan Bakıyoz Aga", "Duvardan görüyoz pusu kuruyoz", 45, function(state)
     Config.ESP = state
-end)
-
-createFeature("Roket", "vizesiz tatil daa ne istiyon kral", 125, function(state)
-    if state then
-        local target = nil
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer then target = p break end
+    if not state then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr.Character then
+                local hl = plr.Character:FindFirstChild("NasipHighlight")
+                if hl then hl:Destroy() end
+            end
         end
-        if target then
-            Config.RoketTarget = target
-        else
-            Config.RoketTarget = nil
-        end
-    else
-        Config.RoketTarget = nil
     end
 end)
 
-createFeature("Endermen", "mc den geldik :P", 195, function(state)
-    Config.EndermenActive = state
+-- 2. Roket (Fling Fix - En yakın oyuncuya uçurur)
+createFeature("Roket", "vizesiz tatil daa ne istiyon kral", 105, function(state)
+    Config.RoketActive = state
+end)
+
+-- 3. Endermen (Random TP)
+createFeature("Endermen", "mc den geldik :P", 165, function(state)
     if state and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local otherPlayers = {}
         for _, p in ipairs(Players:GetPlayers()) do
@@ -140,9 +139,46 @@ createFeature("Endermen", "mc den geldik :P", 195, function(state)
     end
 end)
 
+-- 4. YENİ ÖZELLİK: REJOIN (bak hemen burdayım)
+local RejoinContainer = Instance.new("Frame")
+RejoinContainer.Size = UDim2.new(0, 280, 0, 50)
+RejoinContainer.Position = UDim2.new(0.5, -140, 0, 225)
+RejoinContainer.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+RejoinContainer.BorderSizePixel = 0
+RejoinContainer.Parent = MainFrame
+
+local RejoinCorner = Instance.new("UICorner")
+RejoinCorner.CornerRadius = UDim.new(0, 6)
+RejoinCorner.Parent = RejoinContainer
+
+local RejoinBtn = Instance.new("TextButton")
+RejoinBtn.Size = UDim2.new(1, -10, 0, 24)
+RejoinBtn.Position = UDim2.new(0, 5, 0, 4)
+RejoinBtn.BackgroundTransparency = 1
+RejoinBtn.TextColor3 = Color3.fromRGB(255, 200, 0)
+RejoinBtn.TextSize = 13
+RejoinBtn.Font = Enum.Font.GothamBold
+RejoinBtn.Text = "Rejoin [OYUNDAN ÇIK GİR]"
+RejoinBtn.Parent = RejoinContainer
+
+local RejoinDesc = Instance.new("TextLabel")
+RejoinDesc.Size = UDim2.new(1, -10, 0, 18)
+RejoinDesc.Position = UDim2.new(0, 5, 0, 28)
+RejoinDesc.BackgroundTransparency = 1
+RejoinDesc.TextColor3 = Color3.fromRGB(110, 110, 110)
+RejoinDesc.TextSize = 11
+RejoinDesc.Font = Enum.Font.Gotham
+RejoinDesc.Text = "bak hemen burdayım"
+RejoinDesc.Parent = RejoinContainer
+
+RejoinBtn.MouseButton1Click:Connect(function()
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+end)
+
+-- UNLOAD BUTONU
 local UnloadBtn = Instance.new("TextButton")
-UnloadBtn.Size = UDim2.new(0, 280, 0, 38)
-UnloadBtn.Position = UDim2.new(0.5, -140, 0, 275)
+UnloadBtn.Size = UDim2.new(0, 280, 0, 35)
+UnloadBtn.Position = UDim2.new(0.5, -140, 0, 290)
 UnloadBtn.BackgroundColor3 = Color3.fromRGB(80, 20, 20)
 UnloadBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
 UnloadBtn.TextSize = 13
@@ -174,7 +210,9 @@ Info.TextSize = 10
 Info.Font = Enum.Font.Gotham
 Info.Parent = MainFrame
 
+-- ARKA PLAN DÖNGÜLERİ (ESP ve Fling Mekanikleri)
 RunService.RenderStepped:Connect(function()
+    -- ESP Loop
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer and plr.Character then
             local char = plr.Character
@@ -199,8 +237,27 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    if Config.RoketTarget and Config.RoketTarget.Character and Config.RoketTarget.Character:FindFirstChild("HumanoidRootPart") then
-        local tRoot = Config.RoketTarget.Character.HumanoidRootPart
-        tRoot.AssemblyLinearVelocity = Vector3.new(0, 350, 0)
+    -- Fling (Roket) Loop: Aktifken en yakındaki oyuncunun üstüne gidip yüksek hız uygular
+    if Config.RoketActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local myRoot = LocalPlayer.Character.HumanoidRootPart
+        local closestPlr = nil
+        local shortestDist = math.huge
+        
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (myRoot.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    closestPlr = plr
+                end
+            end
+        end
+        
+        if closestPlr and closestPlr.Character:FindFirstChild("HumanoidRootPart") then
+            local tRoot = closestPlr.Character.HumanoidRootPart
+            -- Adamı vizesiz tatile yollamak için fizik motorunu tetikliyoruz
+            tRoot.AssemblyLinearVelocity = Vector3.new(0, 500, 0)
+            tRoot.AssemblyAngularVelocity = Vector3.new(500, 500, 500)
+        end
     end
 end)

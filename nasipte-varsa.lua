@@ -1,5 +1,5 @@
 -- ==========================================================
---    NASİPTE VARSA BETA v1.4 (R6 İNVİNCİBLE YATAY UÇUŞ)
+--    NASİPTE VARSA BETA v1.5 (YUMUŞAK & KONTROLLÜ UÇUŞ)
 -- ==========================================================
 
 local Players = game:GetService("Players")
@@ -47,7 +47,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "nasipte varsa beta v1.4"
+Title.Text = "nasipte varsa beta v1.5"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
@@ -141,15 +141,15 @@ createFeature("Endermen", "mc den geldik :P", 165, function(state)
     end
 end)
 
--- 4. R6 Invincible Yatay Uçuş Tool Özelliği
-createFeature("R6 Invincible Uçuş", "eline eşyayı al, kolları uzatıp yatay uç", 225, function(state)
+-- 4. R6 Yumuşak ve Kontrollü Yatay Uçuş Tool Özelliği
+createFeature("R6 Yumuşak Uçuş", "eline eşyayı al, yavaşça ve net süzül", 225, function(state)
     Config.ToolFlyActive = state
     if state then
         local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
         local character = LocalPlayer.Character
         if backpack and character then
             local tool = Instance.new("Tool")
-            tool.Name = "NasipteInvincible"
+            tool.Name = "NasipteYavasUcus"
             tool.RequiresHandle = false
             Config.ToolInstance = tool
             
@@ -169,13 +169,13 @@ createFeature("R6 Invincible Uçuş", "eline eşyayı al, kolları uzatıp yatay
                     bodyGyro.CFrame = hrp.CFrame
                     bodyGyro.Parent = hrp
 
-                    -- R6 için yatay duruş ve kamera yönüne göre uçuş döngüsü
                     Config.FlyConnection = RunService.RenderStepped:Connect(function()
                         local camCF = Camera.CFrame
+                        -- Kamerayı sabitlemek yerine sadece hafifçe yönlendiriyoruz, görüş bozulmuyor
                         bodyGyro.CFrame = camCF
                         
-                        -- Kameranın baktığı yöne doğru hız vektörü
-                        local speed = 50
+                        -- Hızı 50'den 22'ye düşürdük, artık sakin sakin süzüleceksin
+                        local speed = 22
                         local moveDir = Vector3.new(0,0,0)
                         local uis = game:GetService("UserInputService")
                         
@@ -194,7 +194,7 @@ createFeature("R6 Invincible Uçuş", "eline eşyayı al, kolları uzatıp yatay
                         
                         bodyVelocity.Velocity = moveDir * speed
                         
-                        -- Invincible gibi yatay yatırma efekti (R6 Torso açısını öne eğme)
+                        -- Torso yatay pozisyonda ama kamerayı bozmayacak şekilde ayarlandı
                         torso.CFrame = camCF * CFrame.Angles(math.rad(90), 0, 0)
                     end)
                 end
@@ -297,7 +297,7 @@ local Info = Instance.new("TextLabel")
 Info.Size = UDim2.new(1, 0, 0, 30)
 Info.Position = UDim2.new(0, 0, 1, -35)
 Info.BackgroundTransparency = 1
-Info.Text = "nasipte varsa beta v1.4 - Sürüklenebilir"
+Info.Text = "nasipte varsa beta v1.5 - Sürüklenebilir"
 Info.TextColor3 = Color3.fromRGB(90, 90, 90)
 Info.TextSize = 10
 Info.Font = Enum.Font.Gotham

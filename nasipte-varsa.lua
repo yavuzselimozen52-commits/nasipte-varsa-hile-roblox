@@ -1,5 +1,5 @@
 -- ==========================================================
---    NASİPTE VARSA BETA V1.1 (HAVALI İNTİKAM GÜNCELLEMESİ)
+--    NASİPTE VARSA BETA V1.2 (ANİMASYONLU & HAVALI SÜRÜM)
 -- ==========================================================
 
 local Players = game:GetService("Players")
@@ -13,7 +13,7 @@ local Config = {
     ESP = false,
     RoketActive = false,
     EndermenActive = false,
-    HavaliTarz = false
+    ActiveAnimationTrack = nil
 }
 
 local function getRGB()
@@ -31,7 +31,7 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 320, 0, 540) -- Yeni özellik için biraz daha uzttık
+MainFrame.Size = UDim2.new(0, 320, 0, 540)
 MainFrame.Position = UDim2.new(0.5, -160, 0.5, -270)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
@@ -46,7 +46,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "nasipte varsa beta v1.1"
+Title.Text = "nasipte varsa beta v1.2"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
@@ -140,22 +140,31 @@ createFeature("Endermen", "mc den geldik :P", 165, function(state)
     end
 end)
 
--- 4. YENİ ÖZELLİK: Şekilli Şukullu / Havalı Tarz (Özel Animasyon Havası)
-createFeature("Şekil Önemli", "havalı takılıyoruz intikam vakti", 225, function(state)
-    Config.HavaliTarz = state
-    if state and LocalPlayer.Character then
-        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            -- Örnek havalı bir Roblox animasyon ID'si (Örn: Havalı duruş/dans paketi öğesi)
+-- 4. ANİMASYONLU ÖZELLİK: Havalı Hareketler / Şekil Başladı
+createFeature("Şekil Önemli", "havalı animasyonla ortamlardayız", 225, function(state)
+    local character = LocalPlayer.Character
+    if not character then return end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    if state then
+        pcall(function()
             local anim = Instance.new("Animation")
-            anim.AnimationId = "rbxassetid://507771019" -- Klasik havalı idle/taslak animasyon
-            local track = humanoid:LoadAnimation(anim)
-            track:Play()
+            -- Örnek havalı dans/aksiyon animasyon ID'si (R15 uyumlu havalı duruş)
+            anim.AnimationId = "rbxassetid://33380097" 
+            Config.ActiveAnimationTrack = humanoid:LoadAnimation(anim)
+            Config.ActiveAnimationTrack.Looped = true
+            Config.ActiveAnimationTrack:Play()
+        end)
+    else
+        if Config.ActiveAnimationTrack then
+            Config.ActiveAnimationTrack:Stop()
+            Config.ActiveAnimationTrack = nil
         end
     end
 end)
 
--- REJOIN BUTONU (bak hemen burdayım)
+-- REJOIN BUTONU
 local RejoinContainer = Instance.new("Frame")
 RejoinContainer.Size = UDim2.new(0, 280, 0, 50)
 RejoinContainer.Position = UDim2.new(0.5, -140, 0, 285)
@@ -207,6 +216,9 @@ UnloadCorner.CornerRadius = UDim.new(0, 6)
 UnloadCorner.Parent = UnloadBtn
 
 UnloadBtn.MouseButton1Click:Connect(function()
+    if Config.ActiveAnimationTrack then
+        Config.ActiveAnimationTrack:Stop()
+    end
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr.Character then
             local hl = plr.Character:FindFirstChild("NasipHighlight")
@@ -220,7 +232,7 @@ local Info = Instance.new("TextLabel")
 Info.Size = UDim2.new(1, 0, 0, 30)
 Info.Position = UDim2.new(0, 0, 1, -35)
 Info.BackgroundTransparency = 1
-Info.Text = "nasipte varsa beta v1.1 - Sürüklenebilir"
+Info.Text = "nasipte varsa beta v1.2 - Sürüklenebilir"
 Info.TextColor3 = Color3.fromRGB(90, 90, 90)
 Info.TextSize = 10
 Info.Font = Enum.Font.Gotham
